@@ -179,12 +179,18 @@ class PyAdventureInterface(PyNetgamesServerListener):
 
     def receive_connection_sucess(self):
         print("====== conectado =======")
+        self.send_match()
 
     def receive_error(self):
         pass
 
-    def receive_match(self):
-        pass
+    def send_match(self):
+        self.server_proxy.send_match(2)
+
+    def receive_match(self, match):
+        print("== partida iniciada ==")
+        print("== ordem:", match.position)
+        print("== match_id", match.match.id)
 
     def receive_disconnect(self):
         pass
