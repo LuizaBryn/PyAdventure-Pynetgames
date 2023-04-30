@@ -142,6 +142,9 @@ class PyAdventureInterface(PyNetgamesServerListener):
                                        width=10, height=2, bd=5, relief="raised", activebackground="#254954", activeforeground="white", command=self.see_cards)
         self.card_description.grid(row=1, column=0)
 
+        self.add_listener()
+        self.send_connect()
+
         self.mainWindow.mainloop()
 
     def remove_card(self, event=None):
@@ -166,18 +169,25 @@ class PyAdventureInterface(PyNetgamesServerListener):
         popup_label.pack()
 
     # -------------------------- PynetGames --------------------------
+    def add_listener(self):
+        self.server_proxy = PyNetgamesServerProxy
+        self.server_proxy.add_listener(self)
 
-    def receive_connection_sucess():
+    def send_connect(self):
+        self.server_proxy.send_connect(
+            address="wss://py-netgames-server.fly.dev")
+
+    def receive_connection_sucess(self):
+        print("====== conectado =======")
+
+    def receive_error(self):
         pass
 
-    def receive_error():
+    def receive_match(self):
         pass
 
-    def receive_match():
+    def receive_disconnect(self):
         pass
 
-    def receive_disconnect():
-        pass
-
-    def receive_move():
+    def receive_move(self):
         pass
