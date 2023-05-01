@@ -170,14 +170,14 @@ class PyAdventureInterface(PyNetgamesServerListener):
 
     # -------------------------- PynetGames --------------------------
     def add_listener(self):
-        self.server_proxy = PyNetgamesServerProxy
+        self.server_proxy = PyNetgamesServerProxy()
         self.server_proxy.add_listener(self)
 
     def send_connect(self):
         self.server_proxy.send_connect(
             address="wss://py-netgames-server.fly.dev")
 
-    def receive_connection_sucess(self):
+    def receive_connection_success(self):
         print("====== conectado =======")
         self.send_match()
 
@@ -190,7 +190,7 @@ class PyAdventureInterface(PyNetgamesServerListener):
     def receive_match(self, match):
         print("== partida iniciada ==")
         print("== ordem:", match.position)
-        print("== match_id", match.match.id)
+        print("== match_id", match.match_id)
 
     def receive_disconnect(self):
         pass
