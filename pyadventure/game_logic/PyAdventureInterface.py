@@ -1,14 +1,12 @@
 from tkinter import *
 import os
 
+from models.Mesa import Mesa
+
 # --------- importações do PyNetgames que serão usadas -----------
 
-import logging
-from typing import Dict, Optional
-from uuid import UUID
-
-from py_netgames_client.tkinter_client.PyNetgamesServerListener import PyNetgamesServerListener
-from py_netgames_client.tkinter_client.PyNetgamesServerProxy import PyNetgamesServerProxy
+from .. import PyNetgamesServerListener
+from .. import PyNetgamesServerProxy
 
 # from tkinter_sample.ServerConnectionMenubar import ServerConnectionMenubar
 
@@ -21,7 +19,6 @@ class PyAdventureInterface(PyNetgamesServerListener):
     # _server_proxy: PyNetgamesServerProxy
     # _menu_bar = ServerConnectionMenubar
     # _ongoing_match: bool
-    # _match_id: UUID
     # _board: Optional[PyAdventureBoard]
     # _buttons: Dict[PyAdventureCoordinate, Button]
     # _logger: logging.Logger
@@ -142,10 +139,28 @@ class PyAdventureInterface(PyNetgamesServerListener):
                                        width=10, height=2, bd=5, relief="raised", activebackground="#254954", activeforeground="white", command=self.see_cards)
         self.card_description.grid(row=1, column=0)
 
+        self.mesa = Mesa()
+        self.__match_id = None
+        self.__local_turn = False
+
         self.add_listener()
         self.send_connect()
 
         self.mainWindow.mainloop()
+
+    @property
+    def match_id(self, match_id: str):
+        return self.__match_id
+    
+    @match_id.setter
+    def match_id(self, match_id: str):
+        self.__match_id = match_id
+
+    def interface_on(self):
+        self.__local_turn = True
+    
+    def interface_off(self):
+        self.__local_turn = False
 
     def remove_card(self, event=None):
         card = event.widget
@@ -176,6 +191,9 @@ class PyAdventureInterface(PyNetgamesServerListener):
     def send_connect(self):
         self.server_proxy.send_connect(
             address="wss://py-netgames-server.fly.dev")
+    
+    def send_match(self):
+        self.server_proxy.send_match(2)
 
     def receive_connection_success(self):
         print("====== conectado =======")
@@ -184,13 +202,15 @@ class PyAdventureInterface(PyNetgamesServerListener):
     def receive_error(self):
         pass
 
-    def send_match(self):
-        self.server_proxy.send_match(2)
-
     def receive_match(self, match):
         print("== partida iniciada ==")
         print("== ordem:", match.position)
         print("== match_id", match.match_id)
+        self.match_id = match.match_id
+        position = match.position
+        if position == 1:
+            self.interface_on()
+
 
     def receive_disconnect(self):
         pass
