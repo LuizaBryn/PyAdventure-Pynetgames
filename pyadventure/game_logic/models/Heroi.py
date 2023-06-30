@@ -1,28 +1,27 @@
-from models import Jogador
-
-class Heroi(object):
+class Heroi():
 	def __init__(self):
 		self.__ataque : int = 0
-		self.__vitalidade : int = 60
-		self.__mana : int = 10
+		self.__vitalidade : int = 50
+		self.__mana : int = 20
 
 	@property
-	def getAtaque(self) -> int:
+	def ataque(self) -> int:
 		return self.__ataque
 	
 	@property
-	def getVitalidade(self) -> int:
+	def vitalidade(self) -> int:
 		return self.__vitalidade
 	
+	@vitalidade.setter
+	def vitalidade(self, aVitalidade : int):
+		self.__vitalidade = aVitalidade
+	
 	@property
-	def getMana(self) -> int:
+	def mana(self) -> int:
 		return self.__mana
-
-	def addMana(self, aMana : int):
-		pass
-
-	def removeMana(self, aMana : int):
-		pass
+	
+	@mana.setter
+	def mana(self, aMana : int):
+		self.__mana = aMana
 
 	
-

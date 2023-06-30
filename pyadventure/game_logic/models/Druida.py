@@ -1,9 +1,14 @@
-from models import Heroi
+from pyadventure.game_logic.models.Heroi import Heroi
 
 class Druida(Heroi):
 	def __init__(self):
-		self.__vitalidade : int = 70
+		super().__init__()
+		self.__vitalidade : int = 60
 
 	@property
-	def getVitalidade(self) -> int:
+	def vitalidade(self) -> int:
 		return self.__vitalidade
+	
+	@vitalidade.setter
+	def vitalidade(self, aVitalidade : int):
+		self.__vitalidade = aVitalidade
