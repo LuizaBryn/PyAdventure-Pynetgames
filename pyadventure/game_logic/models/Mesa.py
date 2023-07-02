@@ -52,6 +52,10 @@ class Mesa(object):
 			if carta.tipo == "barganhar" and len(self.jogador1.mao) > 6:
 				return False
 			self.resolverCartaLocal({"carta": carta.tipo, "custo": carta.custo})
+			if  not self.partida_em_andamento:
+				return {
+					"tipo": "fimDeJogo",
+				}
 			self.jogador1.mao.remove(carta)
 			return {
 				"carta": carta.tipo,
@@ -60,6 +64,11 @@ class Mesa(object):
 			}
 		else:
 			return False
+		
+	def passarVez(self):
+		return {
+			"tipo": "PassarVez"
+		}
 			
 		
 	def descartarCarta(self, aIndiceCarta : int):
@@ -75,10 +84,12 @@ class Mesa(object):
 		match carta:
 			case "ataque_especial":
 				self.jogador1.heroi.mana -= custo
-				self.jogador2.heroi.vitalidade -= 7
+				self.jogador2.heroi.vitalidade -= (7 + self.jogador1.heroi.ataque)
+				self.avaliarVitoria()
 			case "ataque":
 				self.jogador1.heroi.mana -= custo
-				self.jogador2.heroi.vitalidade -= 3
+				self.jogador2.heroi.vitalidade -= (3 + self.jogador1.heroi.ataque)
+				self.avaliarVitoria()
 			case "meditar":
 				self.jogador1.heroi.mana -= custo
 				self.jogador1.heroi.mana += 8
@@ -97,10 +108,10 @@ class Mesa(object):
 		match carta:
 			case "ataque_especial":
 				self.jogador2.heroi.mana -= custo
-				self.jogador1.heroi.vitalidade -= 7
+				self.jogador1.heroi.vitalidade -= (7 + self.jogador2.heroi.ataque)
 			case "ataque":
 				self.jogador2.heroi.mana -= custo
-				self.jogador1.heroi.vitalidade -= 3
+				self.jogador1.heroi.vitalidade -= (3 + self.jogador2.heroi.ataque)
 			case "meditar":
 				self.jogador2.heroi.mana -= custo
 				self.jogador2.heroi.mana += 8
@@ -109,6 +120,15 @@ class Mesa(object):
 				self.jogador2.heroi.vitalidade += 5
 			case "barganhar":
 				self.jogador2.heroi.mana -= custo
+
+	def comprarCarta(self):
+		if len(self.jogador1.mao) < 7:
+			self.jogador1.mao.append(self.jogador1.baralho.removerCarta())
+
+	def avaliarVitoria(self):
+		if self.jogador2.heroi.vitalidade <= 0:
+			self.partida_em_andamento = False
+
 
 	def reset(self):
 		self.__jogador1.reset()

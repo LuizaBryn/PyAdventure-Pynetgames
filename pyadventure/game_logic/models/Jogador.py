@@ -8,8 +8,8 @@ class Jogador():
 	def __init__(self):
 		self.__mao : list = []
 		self.__heroi : Heroi = None
-		self.__vez : bool = False
 		self.__baralho : Baralho = None
+		self.__vez : bool = False
 		self.__herois : dict = {
 			"druida": Druida,
 			"mago": Mago,
@@ -29,6 +29,14 @@ class Jogador():
 		return self.__mao
 	
 	@property
+	def baralho(self) -> Baralho:
+		return self.__baralho
+	
+	@baralho.setter
+	def baralho(self, aBaralho: Baralho):
+		self.__baralho = aBaralho
+	
+	@property
 	def vez(self) -> bool:
 		return self.__vez
 	
@@ -37,22 +45,18 @@ class Jogador():
 		self.__vez = aVez
 	
 	@property
-	def baralho(self) -> Baralho:
-		return self.__baralho
-	
-	@property
 	def herois(self) -> dict:
 		return self.__herois
 	
 	def reset(self):
-		self.__mao.clear()
-		self.__heroi = None
-		self.__vez = False
-		self.__baralho = None
+		self.mao.clear()
+		self.heroi = None
+		self.vez = False
+		self.baralho = None
 
 
 	def inicializar(self, escolha_heroi: str):
-		self.__baralho = Baralho()
+		self.baralho = Baralho()
 
 		self.heroi = self.herois[escolha_heroi]()
 

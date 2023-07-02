@@ -10,33 +10,22 @@ from pyadventure.game_logic.models.Mesa import Mesa
 from py_netgames_client.tkinter_client.PyNetgamesServerListener import PyNetgamesServerListener
 from py_netgames_client.tkinter_client.PyNetgamesServerProxy import PyNetgamesServerProxy
 
-# from tkinter_sample.ServerConnectionMenubar import ServerConnectionMenubar
-
 # -------------------------------------------------------------------------------------
 
 
 class PyAdventureInterface(PyNetgamesServerListener):
 
-    # _tk: Tk
-    # _server_proxy: PyNetgamesServerProxy
-    # _menu_bar = ServerConnectionMenubar
-    # _ongoing_match: bool
-    # _board: Optional[PyAdventureBoard]
-    # _buttons: Dict[PyAdventureCoordinate, Button]
-    # _logger: logging.Logger
-
     def __init__(self):
         self.janela = Tk()
         self.janela.title("PyAdventure")
-        # self.janela.iconbitmap("img/icon.ico")
         self.janela.resizable(False, False)
         self.janela.geometry("1280x720")
         self.janela["bg"] = "#DBE9F4"
         self.janela.grid_columnconfigure(0, weight=1)
-        self.janela.grid_rowconfigure(0, weight=1)  # frameStatus
-        self.janela.grid_rowconfigure(1, weight=3)  # frameHerois
-        self.janela.grid_rowconfigure(
-            2, weight=3)  # frameCartasa AND menuBoard
+        self.janela.grid_rowconfigure(0, weight=1) 
+        self.janela.grid_rowconfigure(1, weight=3) 
+        self.janela.grid_rowconfigure( 2, weight=3) 
+
 
         self.frameStatus = Frame(self.janela)
         self.frameStatus.grid(row=0, column=0, sticky="nsew")
@@ -46,17 +35,20 @@ class PyAdventureInterface(PyNetgamesServerListener):
         self.frameStatus.grid_rowconfigure(0, weight=1)
         self.frameStatus.grid_rowconfigure(1, weight=1)
 
-        self.vidaJogador1 = Label(self.frameStatus, text="Vida: X", font=60, pady=10)
+        self.vidaJogador1 = Label(self.frameStatus, text="Vida: ", font=("Fixedsys", 20), pady=10, fg="green")
         self.vidaJogador1.grid(row=0, column=0)
 
-        self.manaJogador1 = Label(self.frameStatus, text="Mana: X", font=60, padx=0, pady=10)
+        self.manaJogador1 = Label(self.frameStatus, text="Mana: ", font=("Fixedsys", 20), padx=0, pady=10, fg="blue")
         self.manaJogador1.grid(row=1, column=0)
 
-        self.vidaJogador2 = Label(self.frameStatus, font=60, text="Vida: Y")
+        self.vidaJogador2 = Label(self.frameStatus, text="Vida: ", font=("Fixedsys", 20), pady=10, fg="green")
         self.vidaJogador2.grid(row=0, column=2)
         
-        self.manaJogador2 = Label(self.frameStatus, text="Mana: Y", font=60,  padx=0, pady=10)
+        self.manaJogador2 = Label(self.frameStatus, text="Mana: ", font=("Fixedsys", 20),  padx=0, pady=10, fg="blue")
         self.manaJogador2.grid(row=1, column=2)
+
+        self.indicadorVez = Label(self.frameStatus, font=("Fixedsys", 20))
+        self.indicadorVez.grid(row=0, column=1, rowspan=2)
 
         self.frameHerois = Frame(self.janela)
         self.frameHerois.grid(row=1, column=0, sticky="nsew")
@@ -85,6 +77,9 @@ class PyAdventureInterface(PyNetgamesServerListener):
             os.path.dirname(__file__), "./img/hero_guerreiro_right.png"))
         self.magoDireito = PhotoImage(file=os.path.join(
             os.path.dirname(__file__), "./img/hero_mago_right.png"))
+        
+        self.labelHeroiLocal = Label(self.frameHerois)
+        self.labelHeroiRemoto = Label(self.frameHerois)
         
         self.cartaAtaque = PhotoImage(file=os.path.join(
             os.path.dirname(__file__), "./img/ataque.png"))
@@ -117,11 +112,13 @@ class PyAdventureInterface(PyNetgamesServerListener):
         self.menu.grid_rowconfigure(1, weight=1)
         self.menu.grid_columnconfigure(0, weight=1)
 
+        self.frameFinal = Frame(self.janela)
+
         self.labels = []
 
-        self.pularVez = Button(self.menu, text="Passar vez", bg="#91DBBB", fg="black", font=("Arial", 14),
-                                width=10, height=2, bd=5, relief="raised", activebackground="#254954", 
-                                activeforeground="white").grid(row=0, column=0)
+        self.pularVez = Label(self.menu, text="Pular Vez", bg="#36696F", fg="white", font=60)
+        self.pularVez.grid(row=0, column=0, sticky="nsew")
+        self.pularVez.bind("<Button-1>", lambda event: self.passarVez())
 
 
         self.mesa = Mesa()
@@ -155,8 +152,11 @@ class PyAdventureInterface(PyNetgamesServerListener):
             escolha = self.mostrarAcoes(indice)
             if escolha == "jogar":
                 jogada = self.mesa.jogarCarta(indice)
+                self.mesa.jogador1.vez = False
                 self.atualizarInterface()
-                if jogada is not None:
+                if bool(jogada):
+                    if jogada["tipo"] == "fimDeJogo":
+                        self.telaFinal(True)
                     self.server_proxy.send_move(self.match_id, jogada)
                     self.turnoLocal = False
                 else:
@@ -164,8 +164,16 @@ class PyAdventureInterface(PyNetgamesServerListener):
             elif escolha == "descartar":
                 self.mesa.descartarCarta(indice)
                 self.atualizarInterface()
+        else:
+            messagebox.showerror("Erro", "Não é sua vez de jogar!")
 
-            
+    def passarVez(self):
+        if self.turnoLocal:
+            jogada = self.mesa.passarVez()
+            self.atualizarInterface()
+            self.server_proxy.send_move(self.match_id, jogada)
+            self.turnoLocal = False
+            self.mesa.jogador1.vez = False
         else:
             messagebox.showerror("Erro", "Não é sua vez de jogar!")
 
@@ -202,9 +210,16 @@ class PyAdventureInterface(PyNetgamesServerListener):
         self.vidaJogador2.config(text=f"Vida: {status['jogador2']['vida']}")
         self.manaJogador2.config(text=f"Mana: {status['jogador2']['mana']}")
 
+    def atualizarVez(self, vez: bool):
+        if vez:
+            self.indicadorVez.config(text="Sua vez", fg="green")
+        else:
+            self.indicadorVez.config(text="Vez do oponente", fg="red")
+
     def atualizarInterface(self):
         self.atualizarMao(self.mesa.jogador1.mao)
         self.atualizarStatus(self.mesa.statusJogadores())
+        self.atualizarVez(self.mesa.jogador1.vez)
 
     def atualizarInterfaceHerois(self, heroi: str):
         if heroi == "druida":
@@ -214,8 +229,19 @@ class PyAdventureInterface(PyNetgamesServerListener):
         elif heroi == "mago":
             imagemHeroi = self.magoDireito
 
-        labelHeroi = Label(self.frameHerois, image=imagemHeroi)
-        labelHeroi.grid(row=0, column=1)
+        self.labelHeroiRemoto.config(image=imagemHeroi)
+        self.labelHeroiRemoto.grid(row=0, column=1)
+
+    def resetarInterface(self):
+        self.labelHeroiLocal.config(image="")
+        self.labelHeroiRemoto.config(image="")
+        self.vidaJogador1.config(text="Vida: ")
+        self.manaJogador1.config(text="Mana: ")
+        self.vidaJogador2.config(text="Vida: ")
+        self.manaJogador2.config(text="Mana: ")
+        self.indicadorVez.config(text="")
+        self.criarLabelsCartas()        
+
 
     def escolheHeroi(self):
         modal = Toplevel(self.janela)
@@ -260,8 +286,8 @@ class PyAdventureInterface(PyNetgamesServerListener):
 
         # Exibe a imagem do herói escolhido
         if imagemHeroi is not None:
-            labelHeroi = Label(self.frameHerois, image=imagemHeroi)
-            labelHeroi.grid(row=0, column=0)
+            self.labelHeroiLocal.config(image=imagemHeroi)
+            self.labelHeroiLocal.grid(row=0, column=0)
 
         return heroiEscolhido
 
@@ -276,7 +302,7 @@ class PyAdventureInterface(PyNetgamesServerListener):
         carta = self.mesa.jogador1.mao[indice]
 
         # Create a label to display the carta information
-        labelCarta = Label(janelaAcoes, text=f"carta: {carta.tipo}")
+        labelCarta = Label(janelaAcoes, text=f"carta: {carta.descricao}")
         labelCarta.pack()
 
         # Create buttons for the available actions
@@ -288,7 +314,7 @@ class PyAdventureInterface(PyNetgamesServerListener):
             escolha.set("descartar")
             janelaAcoes.destroy()
 
-        botaoJogar = Button(janelaAcoes, text="Play", command=setEscolhaJogar)
+        botaoJogar = Button(janelaAcoes, text="Jogar", command=setEscolhaJogar)
         botaoJogar.pack()
 
         botaoDescartar = Button(janelaAcoes, text="Descarta", command=setEscolhaDescartar)
@@ -297,6 +323,25 @@ class PyAdventureInterface(PyNetgamesServerListener):
         janelaAcoes.wait_window(janelaAcoes)
 
         return escolha.get()
+
+    def telaFinal(self, vencedor: bool):
+        self.frameFinal.place(relheight=1, relwidth=1)
+        if vencedor:
+            self.frameFinal["bg"] = "green"
+            labelVitoria = Label(self.frameFinal, text="Você venceu!", font=("Fixedsys", 50))
+            labelVitoria.place(relx=0.5, rely=0.5, anchor=CENTER)
+        else:
+            self.frameFinal["bg"] = "red"
+            labelDerrota = Label(self.frameFinal, text="Você perdeu!", font=("Fixedsys", 50))
+            labelDerrota.place(relx=0.5, rely=0.5, anchor=CENTER)
+        labelJogarNovamente = Label(self.frameFinal, text="Clique para jogar novamente", font=("Fixedsys", 20))
+        labelJogarNovamente.place(relx=0.5, rely=0.6, anchor=CENTER)
+        labelJogarNovamente.bind("<Button-1>", lambda event: self.jogarNovamente())
+
+    def jogarNovamente(self):
+        self.frameFinal.place_forget()
+        self.resetarInterface()
+        self.send_match()
 
 
     # -------------------------- PynetGames --------------------------
@@ -316,7 +361,8 @@ class PyAdventureInterface(PyNetgamesServerListener):
         self.send_match()
 
     def receive_error(self):
-        pass
+        messagebox.showerror("Erro", "Erro do servidor, o jogo será encerrado,")
+        self.janela.destroy()
 
     def receive_match(self, match):
         print("== partida iniciada ==")
@@ -339,16 +385,23 @@ class PyAdventureInterface(PyNetgamesServerListener):
 
 
     def receive_disconnect(self):
-        pass
+        messagebox.showerror("Erro", "O opoente desconectou, o jogo será encerrado")
+        self.janela.destroy()
 
     def receive_move(self, jogada):
         tipoJogada = jogada.payload["tipo"]
 
         if tipoJogada == "jogarCarta":
             self.mesa.resolverCartaRemoto(jogada.payload)
+            self.mesa.comprarCarta()
             self.turnoLocal = True
+            self.mesa.jogador1.vez = True
         elif tipoJogada == "PassarVez":
-            pass
+            self.mesa.comprarCarta()
+            self.turnoLocal = True
+            self.mesa.jogador1.vez = True
+        elif tipoJogada == "fimDeJogo":
+            self.telaFinal(False)
         elif tipoJogada == "Heroi":
             self.mesa.jogador2.heroi = self.mesa.jogador2.herois[jogada.payload["heroi"]]()
             self.atualizarInterfaceHerois(jogada.payload["heroi"])
