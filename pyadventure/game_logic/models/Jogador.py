@@ -48,7 +48,7 @@ class Jogador():
 	def herois(self) -> dict:
 		return self.__herois
 	
-	def reset(self):
+	def resetar(self):
 		self.mao.clear()
 		self.heroi = None
 		self.vez = False

@@ -152,7 +152,6 @@ class PyAdventureInterface(PyNetgamesServerListener):
             escolha = self.mostrarAcoes(indice)
             if escolha == "jogar":
                 jogada = self.mesa.jogarCarta(indice)
-                self.mesa.jogador1.vez = False
                 self.atualizarInterface()
                 if bool(jogada):
                     if jogada["tipo"] == "fimDeJogo":
@@ -170,10 +169,9 @@ class PyAdventureInterface(PyNetgamesServerListener):
     def passarVez(self):
         if self.turnoLocal:
             jogada = self.mesa.passarVez()
-            self.atualizarInterface()
             self.server_proxy.send_move(self.match_id, jogada)
             self.turnoLocal = False
-            self.mesa.jogador1.vez = False
+            self.atualizarInterface()
         else:
             messagebox.showerror("Erro", "Não é sua vez de jogar!")
 
@@ -247,10 +245,8 @@ class PyAdventureInterface(PyNetgamesServerListener):
         modal = Toplevel(self.janela)
         modal.title("Escolha um herói")
 
-        # Cria as variáveis para armazenar a escolha do herói
         self.heroiSelecionado = StringVar()
 
-        # Cria os botões de rádio para cada herói
         frameHeroi = Frame(modal)
         frameHeroi.pack()
 
@@ -258,22 +254,17 @@ class PyAdventureInterface(PyNetgamesServerListener):
         imagensHerois = [self.druidaMini, self.guerreiroMini, self.magoMini]
 
         for i in range(len(opcoesHerois)):
-            # Define a imagem do herói
             imagemHeroi = imagensHerois[i]
 
-            # Cria o botão de rádio com a imagem do herói
             botaoHeroi = Radiobutton(frameHeroi, image=imagemHeroi, variable=self.heroiSelecionado,
                                       value=opcoesHerois[i], indicatoron=0, width=100, height=100)
             botaoHeroi.pack(side=LEFT, padx=10)
 
-        # Adiciona um botão OK para confirmar a escolha
         botaoOK = Button(modal, text="OK", command=modal.destroy)
         botaoOK.pack(pady=10)
 
-        # Aguarda a seleção do herói
         modal.wait_window(modal)
 
-        # Carrega a imagem do herói escolhido
         heroiEscolhido = self.heroiSelecionado.get()
         imagemHeroi = None
 
@@ -284,7 +275,6 @@ class PyAdventureInterface(PyNetgamesServerListener):
         elif heroiEscolhido == "mago":
             imagemHeroi = self.magoEsquerdo
 
-        # Exibe a imagem do herói escolhido
         if imagemHeroi is not None:
             self.labelHeroiLocal.config(image=imagemHeroi)
             self.labelHeroiLocal.grid(row=0, column=0)
@@ -292,20 +282,16 @@ class PyAdventureInterface(PyNetgamesServerListener):
         return heroiEscolhido
 
     def mostrarAcoes(self, indice: int):
-        # Create a new window
         janelaAcoes = Toplevel(self.janela)
         janelaAcoes.title("Ações")
 
         escolha = StringVar()
 
-        # Get the card from the player's hand based on the card index
         carta = self.mesa.jogador1.mao[indice]
 
-        # Create a label to display the carta information
         labelCarta = Label(janelaAcoes, text=f"carta: {carta.descricao}")
         labelCarta.pack()
 
-        # Create buttons for the available actions
         def setEscolhaJogar():
             escolha.set("jogar")
             janelaAcoes.destroy()
@@ -361,7 +347,7 @@ class PyAdventureInterface(PyNetgamesServerListener):
         self.send_match()
 
     def receive_error(self):
-        messagebox.showerror("Erro", "Erro do servidor, o jogo será encerrado,")
+        messagebox.showerror("Erro", "Erro do servidor, o jogo será encerrado")
         self.janela.destroy()
 
     def receive_match(self, match):
@@ -374,7 +360,7 @@ class PyAdventureInterface(PyNetgamesServerListener):
             self.turnoLocal = True
 
         escolhaHeroi = self.escolheHeroi()
-        self.mesa.start_match(vez, escolhaHeroi)
+        self.mesa.comercarPartida(vez, escolhaHeroi)
 
         jogada = {
             "tipo": "Heroi",
@@ -388,18 +374,16 @@ class PyAdventureInterface(PyNetgamesServerListener):
         messagebox.showerror("Erro", "O opoente desconectou, o jogo será encerrado")
         self.janela.destroy()
 
-    def receive_move(self, jogada):
+    def receive_move(self, jogada : dict):
         tipoJogada = jogada.payload["tipo"]
 
         if tipoJogada == "jogarCarta":
             self.mesa.resolverCartaRemoto(jogada.payload)
             self.mesa.comprarCarta()
             self.turnoLocal = True
-            self.mesa.jogador1.vez = True
         elif tipoJogada == "PassarVez":
             self.mesa.comprarCarta()
             self.turnoLocal = True
-            self.mesa.jogador1.vez = True
         elif tipoJogada == "fimDeJogo":
             self.telaFinal(False)
         elif tipoJogada == "Heroi":

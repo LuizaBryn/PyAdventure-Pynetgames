@@ -24,9 +24,9 @@ class Baralho(object):
 				carta = Carta(tipo, custo, descricao)
 				self.cartas.append(carta)
 
-		self.__embaralhar()
+		self.embaralhar()
 
-	def __embaralhar(self) -> None:
+	def embaralhar(self) -> None:
 		random.shuffle(self.__cartas)
 
 	def removerCarta(self) -> Carta:

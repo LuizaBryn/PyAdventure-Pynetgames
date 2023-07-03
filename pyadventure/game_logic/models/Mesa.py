@@ -1,5 +1,4 @@
 from pyadventure.game_logic.models.Jogador import Jogador
-from pyadventure.game_logic.models.Carta import Carta
 
 class Mesa(object):
 	def __init__(self):
@@ -23,11 +22,10 @@ class Mesa(object):
 	def partidaEmAndamento(self, aPartidaEmAndamento : bool):
 		self.__partidaEmAndamento = aPartidaEmAndamento
 
-	def start_match(self, aTurn : bool, aEscolhaHeroi: str):
-		self.reset()
-		self.partida_em_andamento = True
-		self.vez_jogar = aTurn
-		if self.vez_jogar:
+	def comercarPartida(self, aTurno : bool, aEscolhaHeroi: str):
+		self.resetar()
+		self.partidaEmAndamento = True
+		if aTurno:
 			self.jogador1.vez = True
 		else:
 			self.jogador2.vez = True
@@ -48,24 +46,29 @@ class Mesa(object):
 
 	def jogarCarta(self, aIndiceCarta : int):
 		carta = self.obtemCarta(self.jogador1, aIndiceCarta)
-		if self.jogador1.heroi.mana >= carta.custo:
-			if carta.tipo == "barganhar" and len(self.jogador1.mao) > 6:
-				return False
-			self.resolverCartaLocal({"carta": carta.tipo, "custo": carta.custo})
-			if  not self.partida_em_andamento:
-				return {
-					"tipo": "fimDeJogo",
-				}
-			self.jogador1.mao.remove(carta)
-			return {
-				"carta": carta.tipo,
-				"custo": carta.custo,
-				"tipo": "jogarCarta"
-			}
-		else:
+		if self.jogador1.heroi.mana < carta.custo:
 			return False
 		
+		if carta.tipo == "barganhar" and len(self.jogador1.mao) > 6:
+			return False
+		
+		self.resolverCartaLocal({"carta": carta.tipo, "custo": carta.custo})
+
+		if  not self.partidaEmAndamento:
+			return {
+				"tipo": "fimDeJogo",
+			}
+		
+		self.jogador1.mao.remove(carta)
+		self.jogador1.vez = False
+		return {
+			"carta": carta.tipo,
+			"custo": carta.custo,
+			"tipo": "jogarCarta"
+		}
+		
 	def passarVez(self):
+		self.jogador1.vez = False
 		return {
 			"tipo": "PassarVez"
 		}
@@ -124,14 +127,15 @@ class Mesa(object):
 	def comprarCarta(self):
 		if len(self.jogador1.mao) < 7:
 			self.jogador1.mao.append(self.jogador1.baralho.removerCarta())
+			self.jogador1.vez = True
 
 	def avaliarVitoria(self):
 		if self.jogador2.heroi.vitalidade <= 0:
-			self.partida_em_andamento = False
+			self.partidaEmAndamento = False
 
 
-	def reset(self):
-		self.__jogador1.reset()
-		self.__jogador2.reset() 
-		self.__partidaEmAndamento = False
+	def resetar(self):
+		self.jogador1.resetar()
+		self.jogador2.resetar() 
+		self.partidaEmAndamento = False
 
