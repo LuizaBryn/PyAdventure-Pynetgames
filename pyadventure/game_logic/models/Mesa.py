@@ -47,10 +47,10 @@ class Mesa(object):
 	def jogarCarta(self, aIndiceCarta : int):
 		carta = self.obtemCarta(self.jogador1, aIndiceCarta)
 		if self.jogador1.heroi.mana < carta.custo:
-			return False
+			return {}
 		
 		if carta.tipo == "barganhar" and len(self.jogador1.mao) > 6:
-			return False
+			return {}
 		
 		self.resolverCartaLocal({"carta": carta.tipo, "custo": carta.custo})
 
